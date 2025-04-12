@@ -8,13 +8,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
+  SafeAreaView,
 } from 'react-native';
 import tw from 'twrnc';
 import axios from 'axios';
 import { WebView } from 'react-native-webview';
+import { FontAwesome } from '@expo/vector-icons';
 
-const ChatScreen = () => {
-  const [messages, setMessages] = useState([]);
+const ChatScreen = ({ navigation }) => {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hi!' }
+  ]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const scrollViewRef = useRef(null);
@@ -77,28 +82,45 @@ const ChatScreen = () => {
   `;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={tw`flex-1 bg-gray-50`}
-    >
-      <View style={tw`bg-indigo-600 p-4 pt-10 flex-row justify-between items-center`}>
-        <Text style={tw`text-white text-2xl font-bold`}>Chatbot</Text>
-        <TouchableOpacity onPress={() => setMessages([])}>
-          <Text style={tw`text-white text-sm`}>Clear</Text>
+    <SafeAreaView style={tw`flex-1 bg-white`}>
+      {/* Header */}
+      <View style={tw`p-4`}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          style={tw`w-8 h-8 justify-center`}
+        >
+          <FontAwesome name="arrow-left" size={24} color="black" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
-        style={tw`flex-1 p-4`}
-        contentContainerStyle={tw`pb-4`}
+      {/* Chat Area */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={tw`flex-1`}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {messages.length === 0 ? (
-          <View style={tw`flex-1 justify-center items-center mt-20`}>
-            <Text style={tw`text-gray-500 text-lg`}>Start chatting!</Text>
+        <ScrollView
+          ref={scrollViewRef}
+          style={tw`flex-1 px-4`}
+          contentContainerStyle={tw`pb-4`}
+        >
+          {/* Doctor Character and Welcome Message */}
+          <View style={tw`items-center justify-center mb-6`}>
+            <View style={tw`w-40 h-40 rounded-full border-4 border-blue-400 overflow-hidden mb-4`}>
+              <Image
+                source={require('../assets/doctor.png')}
+                style={tw`w-full h-full`}
+                resizeMode="cover"
+              />
+            </View>
+            
+            <Text style={tw`text-xl font-bold text-black`}>
+              {messages[0].content}
+            </Text>
           </View>
-        ) : (
-          messages.map((msg, index) => (
+
+          {/* Messages (excluding the first welcome message) */}
+          {messages.slice(1).map((msg, index) => (
             <View
               key={index}
               style={tw`mb-4 flex-row ${
@@ -106,50 +128,55 @@ const ChatScreen = () => {
               }`}
             >
               <View
-                style={tw`max-w-[75%] p-3 rounded-2xl shadow-md ${
+                style={tw`max-w-[75%] p-3 rounded-2xl ${
                   msg.role === 'user'
-                    ? 'bg-indigo-500'
-                    : 'bg-white border border-gray-200'
+                    ? 'bg-blue-500'
+                    : 'bg-gray-200'
                 }`}
               >
                 <Text
                   style={tw`${
-                    msg.role === 'user' ? 'text-white' : 'text-gray-800'
+                    msg.role === 'user' ? 'text-white' : 'text-black'
                   }`}
                 >
                   {msg.content}
                 </Text>
               </View>
             </View>
-          ))
-        )}
-      </ScrollView>
+          ))}
+        </ScrollView>
 
-      <View style={tw`p-4 bg-white border-t border-gray-200 flex-row items-center`}>
-        <TextInput
-          style={tw`flex-1 p-3 border border-gray-300 rounded-full mr-2 bg-gray-100 text-gray-800`}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type or speak a message..."
-          placeholderTextColor={tw.color('gray-500')}
-        />
-        <TouchableOpacity
-          onPress={() => setIsRecording(true)}
-          style={tw`p-3 ${isRecording ? 'bg-red-500' : 'bg-indigo-500'} rounded-full mr-2`}
-        >
-          {isRecording ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text style={tw`text-white font-semibold`}>🎙️</Text>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => sendMessage()}
-          style={tw`p-3 bg-indigo-500 rounded-full`}
-        >
-          <Text style={tw`text-white font-semibold`}>Send</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Input Area */}
+        <View style={tw`p-4 pb-6`}>
+          <View style={tw`flex-row items-center bg-gray-200 rounded-full`}>
+            <TextInput
+              style={tw`flex-1 py-3 px-5 text-black rounded-l-full`}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Ask me anything..."
+              placeholderTextColor={tw.color('gray-500')}
+            />
+            
+            <TouchableOpacity
+              onPress={() => setIsRecording(true)}
+              style={tw`px-4`}
+            >
+              {isRecording ? (
+                <ActivityIndicator size="small" color="#4d8bf5" />
+              ) : (
+                <FontAwesome name="microphone" size={20} color="gray" />
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              onPress={() => sendMessage()}
+              style={tw`bg-blue-500 h-10 w-10 rounded-full justify-center items-center mr-1`}
+            >
+              <FontAwesome name="arrow-right" size={16} color="white" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
 
       {isRecording && (
         <WebView
@@ -164,7 +191,7 @@ const ChatScreen = () => {
           style={tw`absolute h-0 w-0`}
         />
       )}
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
